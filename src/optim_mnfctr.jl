@@ -39,6 +39,12 @@ function pairing(sequence::Union{Array{T, 1}, UnitRange{T}})::Array{Tuple{T, T}}
     return L
 end
 
+
+"""
+run_sequential(matrix)
+
+Return the minimum path sum from the available cost matrix and the path sequence that leads to the minimum sum, calculated sequentially.
+"""
 function run_sequential(matrix)
 
     @info "Started finding the minimal sequence of production orders"
@@ -49,50 +55,59 @@ function run_sequential(matrix)
     vec_ = 1:x
     perms = permutations(vec_)
     l = length(perms)
-    MIN = 99999999
+
+    @info "The number of permutations to calculate is $l"
+
+    MIN = 99999999 # or Inf
     MIN_SEQUENCE = Int64[]
 
     #@floop ThreadedEx() for i in 1:l
         #global MIN, MIN_SEQUENCE, vec_
     #@threads for i in 1:l
     for i in 1:l #perms
+
         nthp = nthperm(vec_, i)
         p = pairing(nthp)
-        #@info @sprintf "Permutation %s" p
+
+        #@debug @sprintf "Permutation %s" p
+
         s = Int64(0)
         #s = Threads.Atomic{Int}(0)
 
         for j in p
-            #@info @sprintf "The j iterator value within the J loop is %s " j
+            @debug @sprintf "The j iterator value within the J loop is %s " j
             #println("Cost: ", matrix[j...])
             @inbounds s += matrix[j...]
             #println("Sum: ", s)
         end
 
-        #@debug println("s: $s")
+        @debug println("s: $s")
 
         if s < MIN
             MIN = s
             MIN_SEQUENCE = nthp
-            #@debug "Resetting MIN to s: new min is $MIN"
+            @debug "Resetting MIN to s: new min is $MIN"
         end
-        #@debug "s < MIN: s=$s, MIN=$MIN"
-        #@debug "#-----#"
+        @debug "s < MIN: s=$s, MIN=$MIN"
+        @debug "#-----#"
     end
     return (MIN, MIN_SEQUENCE)
 end
 
-function run_threaded_no_simd(matrix)
+function run_threaded_with_simd(matrix)
 
     @info "Started finding the minimal sequence of production orders"
 
     #global MIN, MIN_SEQUENCE, vec_
 
     x = size(matrix, 1) #given the matrix has the same number of rows and colums
+
+    @info "matrix has the size $x x $x"
+
     vec_ = 1:x
     perms = permutations(vec_)
     l = length(perms)
-    MIN = 99999999
+    MIN = 99999999 # or Inf
     MIN_SEQUENCE = Int64[]
 
     #@floop ThreadedEx() for i in 1:l
@@ -101,26 +116,28 @@ function run_threaded_no_simd(matrix)
 #    for i in 1:l #perms
         nthp = nthperm(vec_, i)
         p = pairing(nthp)
-        #@info @sprintf "Permutation %s" p
+
+        #@debug @sprintf "Permutation %s" p
+
         s = Int64(0)
         #s = Threads.Atomic{Int}(0)
 
         @simd for j in p
-            #@info @sprintf "The j iterator value within the J loop is %s " j
+            @debug @sprintf "The j iterator value within the J loop is %s " j
             #println("Cost: ", matrix[j...])
             @inbounds s += matrix[j...]
             #println("Sum: ", s)
         end
 
-        #@debug println("s: $s")
+        @debug println("s: $s")
 
         if s < MIN
             MIN = s
             MIN_SEQUENCE = nthp
-            #@debug "Resetting MIN to s: new min is $MIN"
+            @debug "Resetting MIN to s: new min is $MIN"
         end
-        #@debug "s < MIN: s=$s, MIN=$MIN"
-        #@debug "#-----#"
+        @debug "s < MIN: s=$s, MIN=$MIN"
+        @debug "#-----#"
     end
     return (MIN, MIN_SEQUENCE)
 end
@@ -128,7 +145,7 @@ end
 """
     run_threaded(matrix)
 
-Return the minimum path sum from the available cost matrix and the path sequence that leads to the minimum sum.
+Return the minimum path sum from the available cost matrix and the path sequence that leads to the minimum sum, calculated using multiple threads.
 """
 function run_threaded(matrix)
 
@@ -146,35 +163,38 @@ function run_threaded(matrix)
 
     @info "The number of permutations to calculate is $l"
 
-    MIN = 99999999
+    MIN = 99999999 # or Inf
     MIN_SEQUENCE = Int64[]
 
     #@floop ThreadedEx() for i in 1:l
         #global MIN, MIN_SEQUENCE, vec_
+
     @threads for i in 1:l
 #    for i in 1:l #perms
         nthp = nthperm(vec_, i)
         p = pairing(nthp)
-        #@info @sprintf "Permutation %s" p
+
+        #@debug @sprintf "Permutation %s" p
+
         s = Int64(0)
         #s = Threads.Atomic{Int}(0)
 
         for j in p
-            #@info @sprintf "The j iterator value within the J loop is %s " j
+            @debug @sprintf "The j iterator value within the J loop is %s " j
             #println("Cost: ", matrix[j...])
             @inbounds s += matrix[j...]
             #println("Sum: ", s)
         end
 
-        #@debug println("s: $s")
+        @debug println("s: $s")
 
         if s < MIN
             MIN = s
             MIN_SEQUENCE = nthp
-            #@debug "Resetting MIN to s: new min is $MIN"
+            @debug "Resetting MIN to s: new min is $MIN"
         end
-        #@debug "s < MIN: s=$s, MIN=$MIN"
-        #@debug "#-----#"
+        @debug "s < MIN: s=$s, MIN=$MIN"
+        @debug "#-----#"
     end
     return (MIN, MIN_SEQUENCE)
 end
